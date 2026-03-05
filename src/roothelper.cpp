@@ -1,36 +1,18 @@
 #include "roothelper.h"
 
-
-ActionReply RootHelper::setgovernor(const QVariantMap& args){
-
-    QString program = "cpupower";
-    QStringList arguments;
-    arguments << "frequency-set" << "--governor" << args["governor"].toString();
-
-    QProcess process;
-    process.start(program, arguments);
-    if (!process.waitForStarted() || !process.waitForFinished()) {
-        qDebug() << "Error executing command:" << process.errorString();
-        return 1;
-    }
-
-    qDebug() << "Command executed successfully";
-    return 0;
-}
-
 ActionReply RootHelper::setfanspeed(const QVariantMap& args)
 {
     QProcess process;
 
-    process.setProgram("nbfc");
+    process.setProgram(QString::fromUtf8("nbfc"));
 
     QStringList arguments;
 
-    if (args["speed"].toInt() < 35){
-        arguments << "set" << "-a" << "-f" << args["fan"].toString() ;
+    if (args[QString::fromUtf8("speed")].toInt() < 35){
+        arguments << QString::fromUtf8("set") << QString::fromUtf8("-a") << QString::fromUtf8("-f") << args[QString::fromUtf8("fan")].toString() ;
     }
     else {
-        arguments << "set" << "-s" << args["speed"].toString() << "-f" << args["fan"].toString() ;
+        arguments << QString::fromUtf8("set") << QString::fromUtf8("-s") << args[QString::fromUtf8("speed")].toString() << QString::fromUtf8("-f") << args[QString::fromUtf8("fan")].toString() ;
     }
 
     process.setArguments(arguments);
@@ -46,8 +28,6 @@ ActionReply RootHelper::setfanspeed(const QVariantMap& args)
     qDebug() << "Command executed successfully";
     return 0;
 
-
 }
 
-
-KAUTH_HELPER_MAIN("org.kde.omenctl", RootHelper)
+KAUTH_HELPER_MAIN("org.kde.plasma.omenctlnew", RootHelper)

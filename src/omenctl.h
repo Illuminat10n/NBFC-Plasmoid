@@ -3,37 +3,45 @@
     SPDX-License-Identifier: LGPL-2.1-or-later
 */
 
-#include "mythread.h"
 #include "roothelper.h"
+#include "fan.h"
+#include "fanmodel.h"
 
-#include "cpufreq.h"
-#include <Plasma/Applet>
+#pragma once
+#include <Plasma/plasma_version.h>
+#include <Plasma/plasma/plasma_export.h>
 
-#include <iostream>
-#include <fstream>
 
-#include <KProcess>
+#include "KF6/KConfig/kconfig_version.h"
+#include <KF6/KConfigCore/kconfigcore_export.h>
+
+#include <KF6/KConfigCore/kconfig.h>
+#include <KF6/KConfigCore/kconfiggroup.h>
+
+
+#include <Plasma/plasma/applet.h>
 #include <KLocalizedString>
-#include <KAuth>
 
+#include <QQmlDebuggingEnabler>
 
-class OmenCtl : public Plasma::Applet
-{
+//Who the fuck thought it was a good idea????
+#undef QT_NO_CAST_FROM_ASCII
+#undef QT_RESTRICTED_CAST_FROM_ASCII
+#undef QT_NO_CAST_TO_ASCII
+
+class OmenCtl : public Plasma::Applet {
     Q_OBJECT
-    Q_PROPERTY(QString nativeText READ nativeText CONSTANT)
+    QML_ELEMENT
+
     Q_PROPERTY(int cpuCool READ getCpuCool WRITE setCpuCool)
     Q_PROPERTY(int gpuCool READ getGpuCool WRITE setGpuCool)
-    Q_PROPERTY(QStringList governors READ getAvailableGovernors CONSTANT)
-    Q_PROPERTY(QString governor READ getGovernor WRITE setGovernor NOTIFY governorChanged)
-    Q_PROPERTY(QString nvidiaPower READ getNvidiaPower CONSTANT)
-
+    Q_PROPERTY(QVariant fanModel READ fanModel CONSTANT)
 
 public:
-    OmenCtl( QObject *parent, const QVariantList &args );
+    OmenCtl( QObject *parent, const KPluginMetaData &data, const QVariantList &args );
     ~OmenCtl();
 
-    QString nativeText() const;
-
+    QVariant fanModel() const;
     void setCpuCool(short n);
     int getCpuCool() const;
 
@@ -41,23 +49,10 @@ public:
     int getGpuCool() const;
 
     Q_INVOKABLE void setFanSpeed(unsigned short fan, unsigned short speed);
-
-    QString getGovernor();
-    QString getNvidiaPower();
-
-    QStringList getAvailableGovernors() const;
-    Q_INVOKABLE void setGovernor(QString governor);
-
-    //Q_INVOKABLE void initialize();
-
-    signals:
-    void governorChanged(QString newValue);
+    FanModel* m_fanModel = nullptr;
 
 private:
-    QString m_nativeText;
+
     int cpuCool = 30;
     int gpuCool;
-    QStringList* profiles;
-    MyThread cpuWriteThread;
-    MyThread gpuWriteThread;
 };

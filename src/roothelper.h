@@ -1,6 +1,7 @@
-#include <KAuthActionReply>
-#include <KAuthExecuteJob>
-#include <KAuthHelperSupport>
+#include <KAuth/ActionReply>
+#include <KAuth/ExecuteJob>
+#include <KAuth/HelperSupport>
+
 
 #include <QProcess>
 #include <QDebug>
@@ -12,6 +13,6 @@ class RootHelper : public QObject
 {
     Q_OBJECT
 public Q_SLOTS:
-    ActionReply setgovernor(const QVariantMap& args);
     ActionReply setfanspeed(const QVariantMap& args);
+    //ActionReply setfanautocontrol(const QVariantMap& args);
 };

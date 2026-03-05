@@ -4,9 +4,3 @@ Description=Set CPU governor
 Policy=yes
 Persistence=always
 
-[org.kde.omenctl.setfanspeed]
-Name=Set Fan Speed
-Description=Change Fan Speed through NBFC
-Policy=yes
-Persistence=always
-
