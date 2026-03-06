@@ -2,7 +2,7 @@ Nbfc Plasmoid
 ----------------------
 A simple widget that provides a UI to control you fans as provided by nfbc.
 
-**This widget requires [nbfc](https://github.com/hirschmann/nbfc) or to be installed.**  (or maybe even [nbfc-linux](https://github.com/nbfc-linux/nbfc-linux "nbfc-linux") though I never tested it)
+**This widget requires [nbfc](https://github.com/hirschmann/nbfc) to be installed.**  (or maybe even [nbfc-linux](https://github.com/nbfc-linux/nbfc-linux "nbfc-linux") though I never tested it)
 
 
 
@@ -17,7 +17,7 @@ make install
 ```
 (MYPREFIX is where you install your Plasma setup, replace it accordingly or don't put it there at all)
 
-Restart plasma to load the applet: `plasmashell --replace.
+Restart plasma to load the applet: `plasmashell --replace`.
 
 -- Tutorials and resources --
 The explanation of the template
