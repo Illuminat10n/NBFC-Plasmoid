@@ -3,86 +3,75 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasmoid
-import org.kde.plasma.core as PlasmaCore
+import org.kde.kirigami.platform as Platform
 import OmenCtl as Omenctl
 
 import org.kde.ksvg as KSvg
-import org.kde.kirigami as Kirigami
 
 //pragma ComponentBehavior: Bound
-
-PlasmoidItem{
+PlasmoidItem {
     id: root
-    property int speed: 0;
-    onSpeedChanged: {
-        compRoot.rect.spinAnimation.stop();
-        if (speed > 0)
-            spinAnimation.start();
-    }
 
-    fullRepresentation: Item{
+    fullRepresentation: Item {
 
-    ListView {
-        anchors.fill: parent
-        z: 100
-        id: fanList
-        model: Plasmoid.fanModel
+        ListView {
+            anchors.fill: parent
+            id: fanList
+            model: Plasmoid.fanModel
 
-        Timer{
-            id: refreshTimer
-            running: expanded
-            interval: 2000
-            repeat: true
-            onTriggered: {
-                parent.model.refresh();
-            }
-        }
-
-        Timer{
-            id: timeoutTimer
-            interval: 1000
-            repeat: false
-            onTriggered: {
-                refreshTimer.running = true
-            }
-        }
-
-
-        delegate: ColumnLayout{
-            //anchors.left: fanList.left
-            //anchors.right: fanList.right
-
-            implicitHeight: fanList.height
-            implicitWidth: fanList.width
-
-            PlasmaComponents.Label
-            {
-                property string name
-                Layout.fillWidth: true
-                property string displayedTargetSpeed: if (control.value <= 35) {return "Auto"} else return control.value;
-                id: label
-                text: model.name + ": "+ displayedTargetSpeed
-            }
-
-            PlasmaComponents.Slider {
-                Component.onCompleted : {
-                    value = model.targetSpeed
+            Timer {
+                id: refreshTimer
+                running: root.expanded
+                interval: 2800
+                repeat: true
+                onTriggered: {
+                    parent.model.refresh()
                 }
-                Layout.fillWidth: true
-                id: control;
-                implicitWidth: parent.width
-                from: 30
-                to: 100;
-                value: targetSpeed
-                stepSize: 5;
+            }
+            //After clicking and setting a value, don't refresh until one second later
+            Timer {
+                id: timeoutTimer
+                interval: 1000
+                repeat: false
+                onTriggered: {
+                    refreshTimer.running = true
+                }
+            }
 
-                onPressedChanged: {
-                    refreshTimer.running = false
-                    model.targetSpeed = control.value;
-                    timeoutTimer.restart()
+            delegate: ColumnLayout {
+
+                width: ListView.view.width
+
+                PlasmaComponents.Label {
+                    property string name
+                    Layout.fillWidth: true
+                    property string displayedTargetSpeed: if (control.value <= 35) {
+                                                              return "Auto"
+                                                          } else
+                                                              return control.value
+                    id: label
+                    text: model.name + ": " + displayedTargetSpeed
                 }
 
-               /* background: KSvg.FrameSvgItem {
+                PlasmaComponents.Slider {
+                    Component.onCompleted: {
+                        value = model.targetSpeed
+                    }
+                    Layout.fillWidth: true
+                    id: control
+                    implicitWidth: parent.width
+                    from: 30
+                    to: 100
+                    value: targetSpeed
+                    stepSize: 5
+
+                    onPressedChanged: {
+                        refreshTimer.running = false
+                        model.targetSpeed = control.value
+                        timeoutTimer.restart()
+                    }
+
+                    /* background: KSvg.FrameSvgItem {
                     imagePath: "widgets/slider"
                     prefix: "groove"
 
@@ -127,58 +116,45 @@ PlasmoidItem{
                             : parent.height
                     }
                 }   */
+                }
 
-            }
 
-            /*PlasmaComponents.ProgressBar{
+                /*PlasmaComponents.ProgressBar{
                 Layout.fillWidth: true
                 value: model.currentSpeed * 0.01;
             } */
+            }
         }
     }
 
-    }
-
-    compactRepresentation: Item
-    {
+    compactRepresentation: Item {
         id: compRoot
 
         MouseArea {
-                id: mouseArea
+            id: mouseArea
 
-                property bool wasExpanded: false
+            property bool wasExpanded: false
 
-                anchors.fill: parent
-                hoverEnabled: false
-                onPressed: wasExpanded = root.expanded
-                onClicked: {
-                    root.expanded = !wasExpanded
-                }
-        }
-
-        Rectangle{
-            id: rect
-            anchors.centerIn: parent
-            height: parent.height*0.5
-            width: height
-
-            border.color: PlasmaCore.Theme.textColor
-            border.width: 2
-
-            radius: 1
-            color: root.expanded ? PlasmaCore.Theme.highlightColor : "transparent"
-            rotation: 45
-
-            NumberAnimation on rotation {
-                id: spinAnimation
-                from: 0
-                to: 360
-                duration: root.speed > 0 ? 100000 / root.speed : 0 // inverse of speed
-                loops: Animation.Infinite
-                running: root.speed > 40
-                alwaysRunToEnd: true
+            anchors.fill: parent
+            hoverEnabled: false
+            onPressed: wasExpanded = root.expanded
+            onClicked: {
+                root.expanded = !wasExpanded
             }
         }
 
+        Rectangle {
+            id: rect
+            anchors.centerIn: parent
+            height: parent.height * 0.5
+            width: height
+
+            border.color: Platform.Theme.textColor
+            border.width: 2
+
+            radius: 1
+            color: root.expanded ? Platform.Theme.highlightColor: "transparent"
+            rotation: 45
+        }
     }
 }

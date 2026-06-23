@@ -2,9 +2,8 @@
 
 ActionReply RootHelper::setfanspeed(const QVariantMap& args)
 {
-    QProcess process;
-
-    process.setProgram(QString::fromUtf8("nbfc"));
+    auto *process = new QProcess(this);
+    process->setProgram(QString::fromUtf8("nbfc"));
 
     QStringList arguments;
 
@@ -15,19 +14,18 @@ ActionReply RootHelper::setfanspeed(const QVariantMap& args)
         arguments << QString::fromUtf8("set") << QString::fromUtf8("-s") << args[QString::fromUtf8("speed")].toString() << QString::fromUtf8("-f") << args[QString::fromUtf8("fan")].toString() ;
     }
 
-    process.setArguments(arguments);
-    process.startDetached();
+    process->setArguments(arguments);
 
-    process.waitForFinished(-1);
+    connect(process, &QProcess::finished,
+            this,
+            [process](int exitCode, QProcess::ExitStatus status)
+            {
+                process->deleteLater();
+            });
 
-    if (!process.waitForStarted() || !process.waitForFinished()) {
-        qDebug() << "Error executing command:" << process.errorString();
-        return 1;
-    }
+    process->start();
 
-    qDebug() << "Command executed successfully";
-    return 0;
-
+    return ActionReply::SuccessReply();
 }
 
 KAUTH_HELPER_MAIN("org.kde.plasma.omenctlnew", RootHelper)

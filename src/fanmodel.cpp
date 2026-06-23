@@ -1,9 +1,9 @@
 #include "fanmodel.h"
 
-#include <QProcess>
-#include <QStringList>
-#include <QRegularExpression>
 #include <QDebug>
+#include <QProcess>
+#include <QRegularExpression>
+#include <QStringList>
 #include <QVariant>
 
 #undef QT_NO_CAST_FROM_ASCII
@@ -12,15 +12,23 @@
 
 void FanModel::refresh()
 {
-    beginResetModel();
-    m_fans.clear();
-    m_fans = nbfc_exe_fan_init();
-    endResetModel();
-    qDebug() << "Model reset";
+    if (m_nbfcProc.state() == QProcess::Running ||
+        m_nbfcProc.state() == QProcess::Starting) {
+        return;
+    } else {
+
+        m_nbfcProc.start(QString::fromStdString("nbfc"), {QString::fromStdString("status"), QString::fromStdString("-a")});
+
+        qDebug() << "Model reset";
+    }
 }
 
-FanModel::FanModel(QObject* parent) : QAbstractListModel(parent) {
-    m_fans = nbfc_exe_fan_init();
+FanModel::FanModel(QObject *parent)
+    : QAbstractListModel(parent)
+{
+    connect(&m_nbfcProc, &QProcess::finished, this, &FanModel::nbfc_exe_fan_init);
+
+    refresh();
     qDebug() << QString::fromLatin1("Model created!");
 }
 
@@ -30,62 +38,63 @@ FanModel::~FanModel()
     QAbstractListModel::~QAbstractListModel();
 }
 
-int FanModel::rowCount(const QModelIndex& parent) const {
+int FanModel::rowCount(const QModelIndex &parent) const
+{
     Q_UNUSED(parent);
-    //qDebug() << QString::fromLatin1("Called Size: ") + QString::number(m_fans.size());
+    // qDebug() << QString::fromLatin1("Called Size: ") + QString::number(m_fans.size());
     return m_fans.size();
 }
 
-QVariant FanModel::data(const QModelIndex& index, int role) const {
+QVariant FanModel::data(const QModelIndex &index, int role) const
+{
     if (!index.isValid() || index.row() >= m_fans.size()) {
         return QVariant();
     }
 
-    Fan* fan = m_fans[index.row()];
+    Fan *fan = m_fans[index.row()];
 
-    if (role == NameRole || role == Qt::DisplayRole){
-        //qDebug() << QString::fromLatin1("Called Name") + fan->name();
+    if (role == NameRole || role == Qt::DisplayRole) {
+        // qDebug() << QString::fromLatin1("Called Name") + fan->name();
         return fan->name();
-    }
-    else if (role == CurrentSpeedRole){
-        //qDebug() << QString::fromLatin1("Called Current Speed") + QString::number(fan->currentSpeed());
+    } else if (role == CurrentSpeedRole) {
+        // qDebug() << QString::fromLatin1("Called Current Speed") + QString::number(fan->currentSpeed());
         return fan->currentSpeed();
-    }
-    else if (role == TargetSpeedRole){
-        //qDebug() << QString::fromLatin1("Called Target Speed") + QString::number(fan->targetSpeed());
+    } else if (role == TargetSpeedRole) {
+        // qDebug() << QString::fromLatin1("Called Target Speed") + QString::number(fan->targetSpeed());
         return fan->targetSpeed();
     }
 
     return QVariant();
 }
 
-bool FanModel::setData(const QModelIndex& index, const QVariant& value, int role) {
+bool FanModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
     if (!index.isValid() || index.row() >= m_fans.size())
         return false;
 
-    Fan* fan = m_fans[index.row()];
+    Fan *fan = m_fans[index.row()];
     if (role == TargetSpeedRole) {
         fan->setTargetSpeed(value.toInt());
-        Q_EMIT dataChanged(index, index, { TargetSpeedRole });
+        Q_EMIT dataChanged(index, index, {TargetSpeedRole});
         return true;
     }
 
     return false;
 }
 
-QHash<int, QByteArray> FanModel::roleNames() const {
-    QHash<int, QByteArray> roles = {
-    {Qt::DisplayRole, QByteArrayLiteral("display")},
-    {Qt::DecorationRole, QByteArrayLiteral("decoration")},
-    {NameRole, QByteArrayLiteral("name")},
-    {CurrentSpeedRole, QByteArrayLiteral("currentSpeed")},
-    {TargetSpeedRole, QByteArrayLiteral("targetSpeed")}
-    };
+QHash<int, QByteArray> FanModel::roleNames() const
+{
+    QHash<int, QByteArray> roles = {{Qt::DisplayRole, QByteArrayLiteral("display")},
+                                    {Qt::DecorationRole, QByteArrayLiteral("decoration")},
+                                    {NameRole, QByteArrayLiteral("name")},
+                                    {CurrentSpeedRole, QByteArrayLiteral("currentSpeed")},
+                                    {TargetSpeedRole, QByteArrayLiteral("targetSpeed")}};
 
     return roles;
 }
 
-void FanModel::addFan(Fan* fan) {
+void FanModel::addFan(Fan *fan)
+{
     beginInsertRows(QModelIndex(), m_fans.size(), m_fans.size());
     m_fans.append(fan);
     endInsertRows();
@@ -93,16 +102,11 @@ void FanModel::addFan(Fan* fan) {
 
 QList<Fan *> FanModel::nbfc_exe_fan_init()
 {
-    QProcess proc;
-    proc.start(QString::fromStdString("nbfc"),
-               {QString::fromStdString("status"), QString::fromStdString("-a")});
-    proc.waitForFinished();
-
-    QString output = QString::fromStdString(proc.readAllStandardOutput().toStdString());
-    qDebug() << output;
+    QString output = QString::fromStdString(m_nbfcProc.readAllStandardOutput().toStdString());
+    // qDebug() << output;
     QStringList lines = output.split(QString::fromStdString("\n"));
 
-    QList<Fan*> fans = QList<Fan*>();
+    QList<Fan *> fans = QList<Fan *>();
     QString name;
     int number = 0;
     double currentSpeed = -1;
@@ -114,8 +118,7 @@ QList<Fan *> FanModel::nbfc_exe_fan_init()
             name = line.section(QLatin1Char(':'), 1).trimmed();
         } else if (line.startsWith(QStringLiteral("Auto control enabled"))) {
             autoControl = line.section(QLatin1Char(':'), 1).trimmed().toLower() == QStringLiteral("true");
-        }
-        else if (line.startsWith(QStringLiteral("Current fan speed"))) {
+        } else if (line.startsWith(QStringLiteral("Current fan speed"))) {
             currentSpeed = line.section(QLatin1Char(':'), 1).trimmed().toDouble();
         } else if (line.startsWith(QStringLiteral("Target fan speed"))) {
             targetSpeed = line.section(QLatin1Char(':'), 1).trimmed().toDouble();
@@ -129,6 +132,10 @@ QList<Fan *> FanModel::nbfc_exe_fan_init()
             }
         }
     }
+
+    beginResetModel();
+    m_fans = fans;
+    endResetModel();
 
     return fans;
 }

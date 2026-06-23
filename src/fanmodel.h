@@ -3,6 +3,7 @@
 #include <QAbstractListModel>
 #include "fan.h"
 
+#include <QProcess>
 #include <qqmlregistration.h>
 
 #undef QT_NO_CAST_FROM_ASCII
@@ -36,5 +37,7 @@ public:
 private:
     QList<Fan*> m_fans;
     QList<Fan*> nbfc_exe_fan_init();
+
+    QProcess m_nbfcProc;
 
 };
